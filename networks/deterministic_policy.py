@@ -1,6 +1,8 @@
 import torch as t
 from copy import deepcopy
 from .base import Network
+from typing_extensions import Optional
+
 
 class DeterministicPolicy(Network[t.Tensor, t.Tensor]):
 
@@ -11,7 +13,7 @@ class DeterministicPolicy(Network[t.Tensor, t.Tensor]):
         hidden_size: int,
         num_layers: int,
         hidden_activation: t.nn.Module,
-        output_activation: t.nn.Module,
+        output_activation: Optional[t.nn.Module] = None,
     ) -> None:
         super().__init__()
 
@@ -22,7 +24,8 @@ class DeterministicPolicy(Network[t.Tensor, t.Tensor]):
                 layers.append(deepcopy(hidden_activation))
             elif i == num_layers - 1:
                 layers.append(t.nn.Linear(hidden_size, out_size))
-                layers.append(output_activation)
+                if output_activation is not None:
+                    layers.append(output_activation)
             else:
                 layers.append(t.nn.Linear(hidden_size, hidden_size))
                 layers.append(deepcopy(hidden_activation))

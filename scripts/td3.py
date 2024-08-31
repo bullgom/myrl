@@ -17,7 +17,7 @@ import pandas as pd
 # parameters
 
 total_steps = 100_000
-batch_size = 128
+batch_size = 1024
 discount = 0.99
 target_update_rate = 0.005
 target_policy_smoothing = 0.2
@@ -33,6 +33,7 @@ render_mode = "human"
 
 # prepare
 env = gym.make("Pendulum-v1", render_mode=render_mode)
+env = gym.experimental.wrappers.StickyActionV0(env, 0.3)
 assert env.observation_space.shape is not None
 assert env.action_space.shape is not None
 
@@ -46,7 +47,7 @@ _policy = DeterministicPolicy(
     hidden_size=128,
     num_layers=2,
     hidden_activation=t.nn.LeakyReLU(),
-    output_activation=t.nn.Tanh(),
+    output_activation=None
 ).to(device)
 _target_policy = deepcopy(_policy).to(device)
 policy = NetworkSet(
@@ -136,13 +137,14 @@ while running:
     observation, info = env.reset()
     observation = t.tensor(observation, dtype=t.float32).to(device)
     terminated = False
+    truncated = False
 
-    while not terminated:
+    while not terminated and not truncated:
         with t.no_grad():
             action = policy.learning(observation).cpu()
 
         action += t.randn_like(action) * exploration_noise
-        next_observation, reward, terminated, _, _ = env.step(action.numpy())
+        next_observation, reward, terminated, truncated, _ = env.step(action.numpy())
         next_observation = t.tensor(next_observation, dtype=t.float32).to(device)
         replay_buffer.add(observation, action, reward, next_observation, terminated)
         observation = next_observation
