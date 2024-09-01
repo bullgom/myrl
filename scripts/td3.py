@@ -29,7 +29,7 @@ device = t.device("cuda" if t.cuda.is_available() else "cpu")
 # etc parameters
 plot_interval = 100
 plot_ma = 100
-render_mode = "human"
+render_mode = None
 
 # prepare
 env = gym.make("Pendulum-v1", render_mode=render_mode)
